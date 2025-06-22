@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>세금 탐정 퀴즈 대작전! 🕵️‍♀️</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js CDN for sound effects -->
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.7.58/build/Tone.min.js"></script>
+    <style>
+        /* Inter font setting */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Apply background and text color for the entire body using Tailwind's dark: prefix */
+            /* Default light mode colors */
+            @apply bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4;
+            transition: background-color 0.3s ease, color 0.3s ease; /* Add smooth transition effect */
+        }
+        /* Scrollbar design (optional) */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+            @apply dark:bg-gray-700; /* Dark mode scrollbar track */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+            @apply dark:bg-gray-500; /* Dark mode scrollbar thumb */
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+            @apply dark:bg-gray-400; /* Dark mode scrollbar thumb hover */
+        }
+
+        /* --- Dark Mode Specific Overrides (Stronger Application for text visibility) --- */
+        /* Ensure body background changes directly when html has 'dark' class and text becomes very light */
+        html.dark body {
+            background-color: #111827 !important; /* Tailwind's gray-900 equivalent */
+            color: #f9fafb !important; /* Tailwind's gray-100 equivalent - general text color */
+        }
+        /* Ensure quiz-container background changes directly and its child texts are bright */
+        html.dark #quiz-container {
+            background-color: #1f2937 !important; /* Tailwind's gray-800 equivalent */
+        }
+
+        /* Force specific text elements to be white in dark mode */
+        html.dark #start-screen h1,
+        html.dark #start-screen p,
+        html.dark #quiz-header #question-count,
+        html.dark #quiz-header #timer-display,
+        html.dark #question-text,
+        html.dark #feedback-text,
+        html.dark #explanation-text,
+        html.dark #end-quiz-screen h2,
+        html.dark #incorrect-count-display {
+            color: #f9fafb !important; /* Tailwind's gray-100 - very light almost white */
+        }
+
+        /* MODIFIED: Ensure feedback-explanation-area background changes in dark mode */
+        html.dark #feedback-explanation-area {
+            background-color: #1f2937 !important; /* Tailwind's gray-800 equivalent for the explanation box */
+            border-color: #4b5563 !important; /* Dark mode border color */
+        }
+
+
+        /* Choices text color in dark mode - APPLY !IMPORTANT HERE more directly */
+        html.dark #question-choices-area > div {
+            color: #f9fafb !important; /* Ensures choice text is white in dark mode */
+            background-color: #374151 !important; /* Tailwind gray-700 equivalent */
+            border-color: #4b5563 !important; /* Tailwind gray-600 equivalent */
+        }
+
+        /* Override specific class text colors for dark mode */
+        .text-gray-700 { /* For start screen P tags, question count, timer, incorrect count */
+            @apply dark:text-gray-100 !important;
+        }
+        .text-gray-800 { /* For H1, H2, Question text */
+            @apply dark:text-gray-100 !important;
+        }
+        .text-blue-600 { /* For scores etc. */
+             @apply dark:text-blue-400 !important; /* Keep blue for scores but make it dark-mode friendly */
+        }
+
+        /* Specific dark mode styles for choice buttons */
+        #question-choices-area > div.hover\:bg-blue-50:hover {
+            @apply dark:hover:bg-blue-900 dark:hover:bg-opacity-20;
+        }
+
+        /* MODIFIED: Changed selected choice background and added distinct blue border for dark mode */
+        #question-choices-area > div.bg-blue-200 { /* selected choice in light mode */
+            /* Existing light mode styles */
+        }
+        html.dark #question-choices-area > div.bg-blue-200 { /* selected choice in dark mode */
+            background-color: #2a3547 !important; /* Slightly lighter than gray-800, darker than gray-700 for distinct selection */
+            border-color: #60a5fa !important; /* Tailwind blue-400 for a clear blue border */
+            border-width: 2px !important; /* Make border more visible */
+            /* Removed ring as border is now used for highlight */
+        }
+
+        #question-choices-area > div.bg-green-100 { /* correct answer feedback */
+            @apply dark:bg-green-700 dark:border-green-400;
+        }
+        #question-choices-area > div.bg-green-200 { /* selected correct answer */
+            @apply dark:bg-green-600 dark:border-green-300;
+        }
+        #question-choices-area > div.bg-red-200 { /* selected incorrect answer */
+            @apply dark:bg-red-600 dark:border-red-300;
+        }
+
+        /* --- Dark Mode for Message Box --- */
+        html.dark #message-box > div { /* Inner div of the message box */
+            background-color: #1f2937 !important; /* Darker background */
+            color: #f9fafb !important; /* Light text for consistency */
+        }
+
+        html.dark #message-text { /* Text inside the message box */
+            color: #f9fafb !important; /* Ensure message text is light */
+        }
+
+        /* Message box button for dark mode (using existing gradient, but ensuring text is visible) */
+        html.dark #message-ok-btn {
+            color: #ffffff !important; /* Explicitly ensure white text on button */
+        }
+    </style>
+</head>
+<body>
+    <div id="quiz-container" class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-2xl transition-colors duration-300 relative">
+        <!-- Settings Controls (Top Right) -->
+        <div id="settings-controls" class="absolute top-4 right-4 flex space-x-2">
+            <!-- Dark Mode Toggle -->
+            <button id="dark-mode-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 transition duration-300 ease-in-out hover:scale-110">
+                <!-- Sun icon (default: shown in light mode) -->
+                <svg id="sun-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1m-16 0H3m15.325-7.325l-.707-.707M6.343 17.657l-.707.707M17.657 6.343l.707-.707M6.343 6.343l-.707-.707"></path>
+                </svg>
+                <!-- Moon icon (hidden by default, shown in dark mode) -->
+                <svg id="moon-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </button>
+            <!-- Sound Toggle -->
+            <button id="sound-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 transition duration-300 ease-in-out transform hover:scale-110">
+                <!-- Speaker icon (default: shown when sound is on) -->
+                <svg id="speaker-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9l1.414-1.414M7.05 18.95a5 5 0 010-7.072M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <!-- Mute icon (hidden by default, shown when sound is off) -->
+                <svg id="mute-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Start screen -->
+        <div id="start-screen" class="text-center p-6 space-y-4">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6">조세특례제한법 대작전! 🕵️‍♀️</h1>
+            <p class="text-lg text-gray-700 dark:text-gray-300 mb-8">몇 문제 풀어볼까? 숫자 버튼을 눌러줘! 👇</p>
+            <div class="space-y-4">
+                <!-- Start 10 questions button with pastel gradient -->
+                <button id="start-10-btn" class="w-full bg-gradient-to-r from-blue-200 to-blue-400 hover:from-blue-300 hover:to-blue-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    10문제 도전! 🚀
+                </button>
+                <!-- Start 20 questions button with pastel gradient -->
+                <button id="start-20-btn" class="w-full bg-gradient-to-r from-green-200 to-green-400 hover:from-green-300 hover:to-green-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    20문제 용감하게! 🌟
+                </button>
+                <!-- Start 40 questions button with pastel gradient -->
+                <button id="start-40-btn" class="w-full bg-gradient-to-r from-purple-200 to-purple-400 hover:from-purple-300 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    40문제 척척박사! 🌈
+                </button>
+                <!-- Start 150 questions button with pastel gradient (New button for full quiz) -->
+                <button id="start-150-btn" class="w-full bg-gradient-to-r from-red-200 to-red-400 hover:from-red-300 hover:to-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    전체 150문제 완전 정복! 🔥
+                </button>
+            </div>
+        </div>
+
+        <!-- Quiz screen -->
+        <div id="quiz-screen" class="hidden w-full">
+            <!-- Quiz header: Question number, score, and Timer -->
+            <div id="quiz-header" class="flex justify-between items-center w-full mb-6">
+                <p id="question-count" class="text-lg font-semibold text-gray-700 dark:text-gray-300">문제 0 / 0</p>
+                <p id="timer-display" class="text-lg font-semibold text-gray-700 dark:text-gray-300">00:00</p>
+                <p id="score-display" class="text-lg font-semibold text-blue-600 dark:text-blue-400">별 점수: 0 ✨</p>
+            </div>
+
+            <!-- Question text -->
+            <p id="question-text" class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"></p>
+
+            <!-- Choices area -->
+            <div id="question-choices-area" class="w-full space-y-4 mb-6">
+                <!-- Choices will be dynamically inserted here -->
+                <div class="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out text-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" data-choice="O">O (동그라미)</div>
+                <div class="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out text-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" data-choice="X">X (엑스)</div>
+            </div>
+
+            <!-- Feedback and explanation area -->
+            <div id="feedback-explanation-area" class="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-600 hidden">
+                <p id="feedback-text" class="font-semibold mb-2"></p>
+                <p id="explanation-text" class="text-gray-700 dark:text-gray-300 text-sm"></p>
+            </div>
+
+            <!-- Quiz control buttons -->
+            <div id="quiz-controls" class="w-full flex justify-between mt-6">
+                <!-- Check Answer / Next Question button with pastel gradient -->
+                <button id="check-next-btn" class="bg-gradient-to-r from-indigo-200 to-indigo-400 hover:from-indigo-300 hover:to-indigo-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    다음 문제로 Go! 👉
+                </button>
+                <!-- End Early button with pastel gradient -->
+                <button id="end-early-btn" class="bg-gradient-to-r from-red-200 to-red-400 hover:from-red-300 hover:to-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    퀴즈 이제 그만! 멈춰! ✋
+                </button>
+            </div>
+        </div>
+
+        <!-- End quiz screen -->
+        <div id="end-quiz-screen" class="text-center p-6 space-y-4 hidden w-full">
+            <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">퀴즈 끝! 정말 멋진 도전이었어! ✨</h2>
+            <p id="final-score" class="text-2xl text-blue-600 dark:text-blue-400 font-bold mb-6">최종 점수: 0점</p>
+            <div id="end-quiz-buttons-area" class="space-y-4">
+                <!-- Restart Full Quiz button with pastel gradient -->
+                <button id="restart-full-quiz-btn" class="w-full bg-gradient-to-r from-blue-200 to-blue-400 hover:from-blue-300 hover:to-blue-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    처음부터 다시! 🐥
+                </button>
+                <!-- Review Incorrect button with pastel gradient -->
+                <button id="review-incorrect-btn" class="w-full bg-gradient-to-r from-yellow-200 to-yellow-400 hover:from-yellow-300 hover:to-yellow-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    틀린 문제 복습! 🧠
+                </button>
+                <!-- Go To Home button with pastel gradient -->
+                <button id="go-to-home-btn" class="w-full bg-gradient-to-r from-gray-200 to-gray-400 hover:from-gray-300 hover:to-gray-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    처음 화면으로! 🏠
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom message box -->
+    <div id="message-box" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-xl text-center w-80">
+            <p id="message-text" class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100"></p>
+            <button id="message-ok-btn" class="bg-gradient-to-r from-blue-200 to-blue-400 hover:from-blue-300 hover:to-blue-500 text-white font-bold py-2 px-4 rounded-lg">좋아! 😊</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================ Cache DOM elements ============================
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endQuizScreen = document.getElementById('end-quiz-screen');
+
+        const start10Button = document.getElementById('start-10-btn');
+        const start20Button = document.getElementById('start-20-btn');
+        const start40Button = document.getElementById('start-40-btn');
+        const start150Button = document.getElementById('start-150-btn'); // New button
+
+        const quizHeader = document.getElementById('quiz-header');
+        const questionCount = document.getElementById('question-count');
+        const timerDisplay = document.getElementById('timer-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const questionText = document.getElementById('question-text');
+        const questionChoicesArea = document.getElementById('question-choices-area');
+        const feedbackExplanationArea = document.getElementById('feedback-explanation-area');
+        const feedbackText = document.getElementById('feedback-text');
+        const explanationText = document.getElementById('explanation-text');
+        const quizControls = document.getElementById('quiz-controls');
+        const checkNextButton = document.getElementById('check-next-btn');
+        const endEarlyButton = document.getElementById('end-early-btn');
+
+        const finalScoreDisplay = document.getElementById('final-score');
+        const endQuizButtonsArea = document.getElementById('end-quiz-buttons-area');
+        const restartFullQuizButton = document.getElementById('restart-full-quiz-btn');
+        const reviewIncorrectButton = document.getElementById('review-incorrect-btn');
+        const goToHomeButton = document.getElementById('go-to-home-btn');
+
+        const settingsControls = document.getElementById('settings-controls');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const moonIcon = document.getElementById('moon-icon');
+        const sunIcon = document.getElementById('sun-icon');
+        const soundToggle = document.getElementById('sound-toggle');
+        const speakerIcon = document.getElementById('speaker-icon');
+        const muteIcon = document.getElementById('mute-icon');
+
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const messageOkButton = document.getElementById('message-ok-btn');
+
+        // ============================ Global variables and quiz data ============================
+        let allQuizData = []; // Array to store all quiz data
+        let currentQuizData = []; // Array of questions for the current quiz session
+        let incorrectQuestions = []; // Array to store incorrect questions
+        let currentQuestionIndex = 0;
+        let score = 0; // Raw score (number of correct answers)
+        let selectedChoice = null; // Changed to store 'O' or 'X'
+        let isAnswerChecked = false; // Flag for answer check status
+        let quizTotalQuestions = 0; // Total number of questions for the current quiz session (set at start)
+        let isSoundEnabled = true; // Sound active status
+        let timer = 0; // Timer in seconds
+        let timerIntervalId = null; // ID to clear the interval
+
+        // Tone.js PolySynth (synthesizer that can play multiple notes simultaneously)
+        const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
+
+        // ============================ Custom message box functions ============================
+        /**
+         * Function to display a message to the user (replaces alert)
+         * @param {string} message - Text message to display
+         */
+        function showMessage(message) {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+            // Hide message box and remove event listener when 'OK' button is clicked
+            messageOkButton.addEventListener('click', hideMessage, { once: true });
+        }
+
+        /**
+         * Function to hide the message box
+         */
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        // ============================ Sound effect functions ============================
+        /**
+         * Checks Tone.start() and Tone.Destination.mute status before playing sound
+         * @returns {Promise<void>}
+         */
+        async function ensureAudioContextAndSound() {
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+            }
+            // Set Tone.Destination.mute based on isSoundEnabled status
+            Tone.Destination.mute = !isSoundEnabled;
+        }
+
+        /**
+         * Sound played when the answer is correct
+         */
+        async function playCorrectSound() {
+            await ensureAudioContextAndSound();
+            if (isSoundEnabled) {
+                polySynth.triggerAttackRelease("C5", "8n"); // Play C5 note for 8th note duration
+            }
+        }
+
+        /**
+         * Sound played when the answer is incorrect
+         */
+        async function playIncorrectSound() {
+            await ensureAudioContextAndSound();
+            if (isSoundEnabled) {
+                polySynth.triggerAttackRelease("C3", "8n"); // Play C3 note for 8th note duration
+            }
+        }
+
+        /**
+         * Sound played when quiz starts or restarts (uses chord)
+         */
+        async function playStartSound() {
+            await ensureAudioContextAndSound();
+            if (isSoundEnabled) {
+                polySynth.triggerAttackRelease(["C4", "E4", "G4"], "8n"); // Short ascending chord (C Major)
+            }
+        }
+
+        /**
+         * Sound played when quiz ends (uses chord)
+         */
+        async function playEndSound() {
+            await ensureAudioContextAndSound();
+            if (isSoundEnabled) {
+                polySynth.triggerAttackRelease(["A3", "C4", "E4"], "4n"); // Short, low descending sound (A Minor)
+            }
+        }
+
+        /**
+         * Sound played on general button click or choice selection
+         */
+        async function playButtonClickSound() {
+            await ensureAudioContextAndSound();
+            if (isSoundEnabled) {
+                polySynth.triggerAttackRelease("G4", "32n"); // Very short click sound
+            }
+        }
+
+        // ============================ Embed quiz data ============================
+        const taxSpecialRestrictionLawQuizData = [
+            {
+                question: "조세특례제한법은 조세의 감면 또는 중과 등 조세특례에 관한 사항을 규정하여 과세의 공평을 도모하고 국민경제의 건전한 발전에 이바지함을 목적으로 한다.",
+                answer: "O",
+                explanation: "조세특례제한법 제1조(목적)에 명시된 내용으로, 조세특례를 통해 과세의 공평을 기하고 국민경제 발전에 기여하는 것이 이 법의 핵심 목적입니다. 감면과 중과를 통해 특정 정책 목표를 달성하려는 의도를 가지고 있습니다."
+            },
+            {
+                question: "조세특례제한법에서 '내국인'이라 함은 대한민국에 주소를 두거나 183일 이상 거소를 둔 개인 또는 국내에 본점이나 주사무소를 둔 법인을 말한다.",
+                answer: "O",
+                explanation: "국세기본법 제2조 및 법인세법 제2조에 따라 내국인의 정의를 따르며, 이는 일반적으로 조세특례제한법에도 준용됩니다. 특히 183일 이상 거소는 국내 거주 여부를 판단하는 중요한 기준이 됩니다."
+            },
+            {
+                question: "조세특례제한법에 따른 조세특례는 세법에 특별한 규정이 있는 경우를 제외하고는 해당 세법의 규정에 따른다.",
+                answer: "X",
+                explanation: "조세특례제한법 제3조(다른 세법과의 관계)에 따라 '조세특례제한법은 세법에 우선하여 적용한다'고 명시되어 있습니다. 즉, 일반적인 세법 규정보다 조세특례제한법의 특례 규정이 우선 적용되는 특별법의 성격을 가집니다."
+            },
+            {
+                question: "조세특례는 특정 목적을 달성하기 위하여 필요한 최소한의 범위에서 운용되어야 한다.",
+                answer: "O",
+                explanation: "조세특례제한법 제3조의2(운용원칙)에 규정된 내용입니다. 조세특례는 정책적 목적 달성을 위해 일시적으로 조세 부담을 경감시키는 것이므로, 남용을 방지하고 조세 형평성을 해치지 않기 위해 최소한의 범위에서 제한적으로 운용되어야 합니다."
+            },
+            {
+                question: "조세특례를 적용받으려는 자는 신청서 등 필요한 서류를 관할 세무서장에게 제출하여야 한다.",
+                answer: "O",
+                explanation: "대부분의 조세특례는 납세자의 신청을 전제로 합니다. 이는 세무 당국이 해당 특례의 적용 요건 충족 여부를 확인하고 관리하기 위함입니다. 각 특례별로 요구하는 서류와 절차가 상이할 수 있습니다."
+            },
+            {
+                question: "연구·인력개발비에 대한 세액공제는 연구개발 또는 인력개발을 위한 비용으로서 대통령령으로 정하는 비용에 대하여 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제10조(연구·인력개발비에 대한 세액공제) 및 동법 시행령에서 그 대상 비용의 범위를 구체적으로 정하고 있습니다. 이는 기술 혁신과 인적 자원 개발을 장려하기 위한 목적으로, 범위가 명확해야 정책의 효율성을 높일 수 있습니다."
+            },
+            {
+                question: "중소기업이 연구·인력개발비에 대한 세액공제를 적용받는 경우, 일반기업보다 공제율이 높게 적용될 수 있다.",
+                answer: "O",
+                explanation: "조세특례제한법 제10조에 따라 중소기업의 연구·인력개발 활동을 특별히 장려하기 위해 일반 기업보다 높은 세액공제율을 적용합니다. 이는 중소기업의 혁신 역량 강화를 지원하기 위한 정책적 배려입니다."
+            },
+            {
+                question: "연구·인력개발비에 대한 세액공제는 당해 과세연도의 소득세 또는 법인세에서 공제한다.",
+                answer: "O",
+                explanation: "세액공제는 산출된 세액에서 직접 차감하는 방식이므로, 해당 과세연도의 소득세(개인) 또는 법인세(법인)에서 공제됩니다. 이는 소득공제와 달리 세금 부담을 직접적으로 줄이는 효과가 있습니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제 대상 연구개발은 신제품·신기술 개발뿐만 아니라 기존 제품·기술의 개선활동도 포함한다.",
+                answer: "O",
+                explanation: "조세특례제한법 시행령에 명시된 연구개발의 범위에는 신기술 개발뿐만 아니라 기존 기술의 성능 향상, 새로운 서비스 개발 등 광범위한 활동이 포함됩니다. 이는 기업의 지속적인 혁신 노력을 지원하기 위함입니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제액은 최저한세의 적용을 받지 아니한다.",
+                answer: "X",
+                explanation: "조세특례제한법 제132조(최저한세)에 따라 연구·인력개발비 세액공제는 최저한세 적용 대상입니다. 최저한세는 아무리 많은 감면을 받더라도 최소한의 세금은 납부하도록 하는 제도로, 조세 형평성을 확보하기 위한 것입니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제는 해당 과세연도에 지출한 연구·인력개발비가 직전 과세연도에 지출한 연구·인력개발비보다 증가한 경우에만 적용된다.",
+                answer: "X",
+                explanation: "연구·인력개발비 세액공제는 '증가액 방식'과 '당기 발생액 방식' 중 선택하여 적용할 수 있습니다. 즉, 증가 여부와 관계없이 당기 발생액에 대해서도 공제를 받을 수 있습니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제는 해당 과세연도의 개시일 현재 5년 이상 계속하여 사업을 영위하고 있는 내국인에게만 적용된다.",
+                answer: "X",
+                explanation: "일반적으로 연구·인력개발비 세액공제는 신규 창업 기업을 포함한 모든 내국인이 적용받을 수 있습니다. 특정 업력 요건은 없습니다. 다만, 다른 특례에서 업력 요건이 있을 수 있습니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제를 받은 후 해당 연구개발 결과물을 타인에게 양도하는 경우, 공제받은 세액을 추징할 수 있다.",
+                answer: "O",
+                explanation: "조세특례제한법에는 사후관리 규정이 있어, 세액공제 목적에 부합하지 않는 행위(예: 개발 결과물 유출)가 발생하면 공제받은 세액을 추징할 수 있습니다. 이는 특례의 남용을 방지하고 본래 목적을 달성하게 하기 위함입니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제 대상 연구활동에는 단순히 제품의 외관이나 디자인을 변경하는 활동은 포함되지 않는다.",
+                answer: "O",
+                explanation: "연구·인력개발비 세액공제의 대상이 되는 연구개발은 과학기술적 진보를 수반하는 활동이어야 합니다. 단순히 색상 변경, 외관 디자인 변경 등은 창의적이고 새로운 기술적 가치를 창출하는 활동으로 보기 어려워 대상에서 제외됩니다."
+            },
+            {
+                question: "국가로부터 연구개발비를 보조받은 경우, 해당 보조금에 해당하는 금액은 연구·인력개발비 세액공제 대상 금액에서 제외된다.",
+                answer: "O",
+                explanation: "국가 등으로부터 받은 보조금은 이중 혜택 방지를 위해 연구·인력개발비 세액공제 대상에서 제외됩니다. 기업이 실제로 자체 부담한 연구개발비에 대해서만 공제를 적용하여 공정성을 기합니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제 신청 시, 연구개발계획서 및 연구개발보고서를 제출해야 한다.",
+                answer: "O",
+                explanation: "세액공제를 신청하는 기업은 연구개발 활동의 정당성과 지출의 투명성을 입증하기 위해 연구개발계획서, 연구개발보고서, 지출 증빙 등 관련 서류를 제출해야 합니다. 이는 사후 관리 및 검증에 활용됩니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제는 소득세와 법인세 모두에 적용되는 공통 규정이다.",
+                answer: "O",
+                explanation: "개인사업자(소득세)와 법인사업자(법인세) 모두 연구·인력개발 활동에 대한 세액공제 혜택을 받을 수 있도록 공통으로 규정되어 있습니다. 이는 사업 형태에 관계없이 연구개발 투자를 장려하기 위함입니다."
+            },
+            {
+                question: "연구·인력개발비에 대한 세액공제는 중소기업에 대한 특별세액감면과 중복하여 적용받을 수 없다.",
+                answer: "X",
+                explanation: "조세특례제한법 제127조(중복지원 배제)에 따라 세액감면과 세액공제는 원칙적으로 중복 적용이 가능합니다. 다만, 동일한 대상에 대한 과도한 중복 지원을 막기 위한 예외 규정이 있을 수 있으나, 연구·인력개발비 세액공제와 중소기업 특별세액감면은 일반적으로 중복 적용이 가능합니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제 미공제액은 10년간 이월하여 공제할 수 있다.",
+                answer: "O",
+                explanation: "해당 과세연도에 세액공제를 다 받지 못한 잔액이 있을 경우, 조세특례제한법 제144조(세액공제액의 이월공제)에 따라 일정 기간(일반적으로 10년) 동안 다음 연도로 이월하여 공제를 받을 수 있습니다. 이는 기업의 세금 부담을 분산시키고 투자를 장려하기 위함입니다."
+            },
+            {
+                question: "연구·인력개발 관련 인력개발비에는 직업교육훈련을 위한 교육비용이 포함된다.",
+                answer: "O",
+                explanation: "인력개발비에는 임직원의 직무능력 향상을 위한 교육훈련비, 위탁교육비 등 직업교육훈련을 위한 비용이 포함됩니다. 이는 단순히 연구개발 인력뿐만 아니라 기업 전체의 인적 역량 강화를 지원합니다."
+            },
+            {
+                question: "연구·인력개발비에 대한 세액공제는 기업회계기준에 따라 계상한 연구개발비에 한하여 적용된다.",
+                answer: "X",
+                explanation: "세액공제 대상이 되는 연구개발비는 세법에서 정하는 기준에 따라 판단합니다. 기업회계기준상 연구개발비와 세법상 연구·인력개발비의 범위가 다를 수 있으며, 세법상 요건을 충족해야만 공제가 가능합니다."
+            },
+            {
+                question: "연구개발 전담부서가 아닌 일반 부서에서 수행한 연구활동비는 연구·인력개발비 세액공제 대상에 포함되지 않는다.",
+                answer: "X",
+                explanation: "연구개발전담부서나 기업부설연구소에서 지출된 비용이 아니더라도, 객관적으로 연구개발 활동에 사용된 비용임이 입증되면 세액공제 대상에 포함될 수 있습니다. 중요한 것은 '실질적인 연구개발 활동' 여부입니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제 적용 시, 연구개발비는 발생주의에 따라 계산한다.",
+                answer: "O",
+                explanation: "연구개발비는 실제로 지출이 발생한 시점을 기준으로 계산하는 발생주의 원칙이 적용됩니다. 이는 회계 처리와도 일관성을 유지하며, 세법상 소득 및 비용 계산의 기본 원칙입니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제는 해당 과세연도에 지출한 금액을 기준으로 한다.",
+                answer: "O",
+                explanation: "공제 대상 금액은 해당 과세연도에 실제로 발생하여 지출된 연구·인력개발비를 기준으로 합니다. 이는 당해 연도의 투자 및 지출을 직접적으로 반영하기 위함입니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제 시, 연구보조원 인건비는 공제 대상에 포함되지 않는다.",
+                answer: "X",
+                explanation: "연구보조원 등 연구개발 활동에 직접 종사하는 인력의 인건비 또한 연구·인력개발비 세액공제 대상에 포함됩니다. 인력개발을 장려하는 취지에 따라 연구 관련 인력의 인건비를 지원합니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제는 고용증가에 따른 세액공제와 중복 적용이 가능하다.",
+                answer: "O",
+                explanation: "서로 다른 정책 목적을 가진 세액공제이므로 원칙적으로 중복 적용이 가능합니다. 연구개발 투자와 고용 창출은 모두 장려되어야 할 활동이기 때문입니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제는 기술혁신형 중소기업에만 적용되는 특례이다.",
+                answer: "X",
+                explanation: "연구·인력개발비 세액공제는 기술혁신형 중소기업에만 한정되지 않습니다. 연구개발 활동을 하는 모든 업종의 기업이 적용 요건을 충족하면 혜택을 받을 수 있습니다. 다만, 중소기업에 대한 공제율이 더 높습니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제는 해당 과세연도의 소득세 또는 법인세 산출세액이 없는 경우에는 적용받을 수 없다.",
+                answer: "X",
+                explanation: "산출세액이 없더라도 공제 요건을 충족하면 세액공제액은 발생하며, 발생한 공제액은 이월공제 규정에 따라 다음 연도부터 일정 기간 동안 공제받을 수 있습니다. (조세특례제한법 제144조)"
+            },
+            {
+                question: "연구·인력개발비 세액공제 대상 기술에는 정보통신기술(ICT) 관련 기술도 포함된다.",
+                answer: "O",
+                explanation: "정보통신기술(ICT)은 현대 사회의 핵심 기술 분야이며, 관련 연구개발 활동 또한 세액공제 대상에 포함됩니다. 기술의 종류에 제한을 두지 않고 광범위한 연구개발을 지원합니다."
+            },
+            {
+                question: "연구·인력개발비 세액공제는 내국법인만 적용받을 수 있고, 외국법인은 적용받을 수 없다.",
+                answer: "X",
+                explanation: "조세특례제한법상 외국법인도 국내에 사업장을 두고 연구·인력개발 활동을 하는 경우 일정 요건 하에 세액공제를 적용받을 수 있습니다. 이는 국내 투자 및 고용 창출을 유도하기 위함입니다."
+            },
+            {
+                question: "생산성향상시설 투자세액공제는 생산성 향상을 위한 시설투자에 대하여 세액공제를 해주는 제도이다.",
+                answer: "O",
+                explanation: "조세특례제한법 제24조(생산성향상시설 투자세액공제)에 따라, 기업의 생산성 및 경쟁력 향상을 목적으로 하는 특정 시설 투자에 대해 세금 부담을 줄여주는 제도입니다. 주로 자동화 설비, 고효율 설비 등이 대상이 됩니다."
+            },
+            {
+                question: "생산성향상시설 투자세액공제는 해당 시설을 사업용으로 사용한 날이 속하는 과세연도부터 적용된다.",
+                answer: "O",
+                explanation: "시설 투자의 효과가 실제로 발휘되는 시점을 기준으로 공제를 적용하기 위해, 해당 시설을 사업에 사용하기 시작한 날이 속하는 과세연도에 세액공제를 받을 수 있습니다."
+            },
+            {
+                question: "투자세액공제 대상 자산은 감가상각 대상 자산에 한정된다.",
+                answer: "O",
+                explanation: "대부분의 투자세액공제는 사업용 유형자산 중 감가상각이 가능한 자산에 대해서 적용됩니다. 이는 투자의 실질적인 경제적 가치를 반영하고, 자산의 사업적 활용을 전제로 합니다."
+            },
+            {
+                question: "수도권과밀억제권역에 투자하는 경우에도 생산성향상시설 투자세액공제를 적용받을 수 있다.",
+                answer: "O",
+                explanation: "생산성향상시설 투자세액공제는 수도권과밀억제권역 여부와 관계없이 전국적으로 적용 가능한 특례입니다. 특정 지역에 대한 투자 촉진보다는 전반적인 산업 생산성 향상에 초점을 맞춥니다."
+            },
+            {
+                question: "투자세액공제는 해당 과세연도의 소득세 또는 법인세 산출세액이 없는 경우에도 이월하여 공제받을 수 있다.",
+                answer: "O",
+                explanation: "연구·인력개발비 세액공제와 마찬가지로, 투자세액공제도 해당 연도에 모두 공제받지 못하면 일정 기간(일반적으로 10년) 다음 연도로 이월하여 공제받을 수 있습니다. 이는 기업의 투자 부담을 경감하고 지속적인 투자를 유도하기 위함입니다."
+            },
+            {
+                question: "고용증대 세액공제는 상시근로자 수가 증가한 경우에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제29조의5(고용증대 세액공제)에 따라, 기업이 상시근로자 수를 증가시킨 경우 고용 창출을 장려하기 위해 세액공제를 제공합니다. 이는 일자리 창출 정책의 일환입니다."
+            },
+            {
+                question: "고용증대 세액공제 적용 시, 청년 상시근로자는 일반 상시근로자보다 공제액이 높게 적용된다.",
+                answer: "O",
+                explanation: "청년층의 고용을 더욱 적극적으로 유도하기 위해 청년 상시근로자에 대한 공제액을 일반 상시근로자보다 높게 책정합니다. 이는 청년 실업 해소를 위한 정책적 지원입니다."
+            },
+            {
+                question: "고용증대 세액공제는 해당 과세연도의 소득세 또는 법인세에서 공제한다.",
+                answer: "O",
+                explanation: "세액공제는 산출된 세액에서 직접 차감되는 방식이므로, 해당 과세연도의 소득세(개인) 또는 법인세(법인)에서 공제됩니다."
+            },
+            {
+                question: "고용증대 세액공제 적용 후 해당 과세연도 종료일로부터 2년 이내에 고용이 감소하는 경우, 공제받은 세액을 추징할 수 있다.",
+                answer: "O",
+                explanation: "고용증대 세액공제는 고용 유지를 전제로 합니다. 따라서 사후관리 기간 내에 고용이 감소하면, 공제받았던 세액을 추징하여 특례의 남용을 방지하고 고용의 지속성을 확보하려는 목적이 있습니다."
+            },
+            {
+                question: "고용증대 세액공제는 중소기업에만 적용되는 특례이다.",
+                answer: "X",
+                explanation: "고용증대 세액공제는 중소기업뿐만 아니라 중견기업, 대기업에도 일부 적용될 수 있습니다. 다만, 기업 규모별로 공제율이나 적용 요건이 다르게 규정될 수 있습니다."
+            },
+            {
+                question: "통합투자세액공제는 특정 시설투자에 대한 개별적인 투자세액공제를 통합하여 적용하는 제도이다.",
+                answer: "O",
+                explanation: "조세특례제한법 제25조의5(통합투자세액공제)는 기존의 여러 개별 투자세액공제 제도를 통합하여 복잡성을 줄이고 기업의 투자 판단을 용이하게 하기 위해 도입된 제도입니다. 신성장 기술 투자 등 다양한 투자를 포괄합니다."
+            },
+            {
+                question: "통합투자세액공제는 신규 투자에 한하여 적용되며, 기존 시설의 보수·유지에는 적용되지 않는다.",
+                answer: "X",
+                explanation: "통합투자세액공제는 신규 투자뿐만 아니라 기존 사업용 자산의 성능 향상을 위한 투자(예: 업그레이드, 개량)에도 적용될 수 있습니다. 보수·유지는 소모성 비용으로 간주되어 일반적으로 대상이 아니지만, 성능 개선 목적의 투자는 포함됩니다."
+            },
+            {
+                question: "통합투자세액공제는 중소기업과 중견기업에만 적용되며, 대기업은 적용받을 수 없다.",
+                answer: "X",
+                explanation: "통합투자세액공제는 중소기업, 중견기업뿐만 아니라 대기업에도 적용됩니다. 다만, 기업 규모별로 공제율이 차등 적용되어 중소기업과 중견기업에 더 높은 혜택을 부여합니다."
+            },
+            {
+                question: "통합투자세액공제는 해당 과세연도의 소득세 또는 법인세 산출세액에서 공제한다.",
+                answer: "O",
+                explanation: "세액공제이므로 산출된 세액에서 직접 차감됩니다. 이는 기업의 투자 의사 결정을 직접적으로 지원하는 방식입니다."
+            },
+            {
+                question: "통합투자세액공제는 최저한세의 적용을 받지 아니한다.",
+                answer: "X",
+                explanation: "통합투자세액공제도 조세특례제한법 제132조에 따라 최저한세 적용 대상입니다. 과도한 세금 감면을 방지하고 기업의 최소한의 세금 납부 의무를 유지하기 위함입니다."
+            },
+            {
+                question: "통합투자세액공제 미공제액은 5년간 이월하여 공제할 수 있다.",
+                answer: "X",
+                explanation: "통합투자세액공제 미공제액은 연구·인력개발비 세액공제와 마찬가지로 일반적으로 10년간 이월하여 공제할 수 있습니다. (조세특례제한법 제144조)"
+            },
+            {
+                question: "환경보전시설 투자세액공제는 환경오염 방지 및 에너지 절약을 위한 시설투자에 대하여 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제25조(환경보전시설 투자세액공제)에 따라, 기업의 환경 보호 및 에너지 효율 개선 노력을 장려하기 위해 특정 시설 투자에 대해 세액공제를 제공합니다. 이는 정부의 환경 정책 방향과 일치합니다."
+            },
+            {
+                question: "환경보전시설 투자세액공제는 해당 시설을 사업에 사용한 날이 속하는 과세연도의 소득세 또는 법인세에서 공제한다.",
+                answer: "O",
+                explanation: "다른 투자세액공제와 동일하게, 시설을 실제로 사용하여 환경보전 효과가 발생하는 시점부터 해당 연도의 세금에서 공제됩니다."
+            },
+            {
+                question: "환경보전시설 투자세액공제는 수도권과밀억제권역 외의 지역에 투자하는 경우에만 적용된다.",
+                answer: "X",
+                explanation: "환경보전시설 투자세액공제는 지역 제한 없이 전국적으로 적용될 수 있습니다. 환경 보호 및 에너지 효율 증대는 특정 지역에 국한되지 않는 국가적 목표이기 때문입니다."
+            },
+            {
+                question: "신성장·원천기술 사업화시설 투자세액공제는 신성장·원천기술을 사업화하기 위한 시설투자에 대하여 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제11조(신성장·원천기술 사업화시설 투자세액공제)에 따라, 미래 성장 동력 확보를 위해 국가적으로 중요한 신기술을 사업화하는 기업의 시설 투자를 지원하는 제도입니다."
+            },
+            {
+                question: "신성장·원천기술 사업화시설 투자세액공제는 중소기업에 한하여 적용된다.",
+                answer: "X",
+                explanation: "신성장·원천기술 사업화시설 투자세액공제는 중소기업뿐만 아니라 중견기업, 대기업에도 적용됩니다. 이는 국가 전체의 신기술 역량 강화를 목표로 하기 때문입니다. 다만, 기업 규모별로 공제율이 차등 적용됩니다."
+            },
+            {
+                question: "신성장·원천기술 사업화시설 투자세액공제 대상 기술은 대통령령으로 정하는 기술에 한정된다.",
+                answer: "O",
+                explanation: "어떤 기술이 신성장·원천기술에 해당하는지는 정부의 정책 방향에 따라 수시로 변경될 수 있으며, 명확한 기준을 위해 대통령령으로 그 대상을 정합니다. 이는 불필요한 논란을 피하고 정책의 유연성을 확보하기 위함입니다."
+            },
+            {
+                question: "에너지절약시설 투자세액공제는 에너지 이용 효율을 높이는 시설투자에 대하여 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제25조의2(에너지절약시설 투자세액공제)에 따라, 기업이 에너지 절약을 위한 시설에 투자할 경우 세금 혜택을 부여하여 국가적인 에너지 효율 향상 목표 달성을 지원합니다."
+            },
+            {
+                question: "에너지절약시설 투자세액공제는 해당 과세연도의 소득세 또는 법인세에서 공제한다.",
+                answer: "O",
+                explanation: "다른 투자세액공제와 마찬가지로, 해당 시설을 사업에 사용한 날이 속하는 과세연도의 소득세 또는 법인세에서 직접 공제됩니다."
+            },
+            {
+                question: "에너지절약시설 투자세액공제는 중소기업과 중견기업에만 적용된다.",
+                answer: "X",
+                explanation: "에너지절약시설 투자세액공제는 기업 규모에 관계없이 적용될 수 있습니다. 모든 기업의 에너지 절약 투자를 장려하기 위한 제도입니다."
+            },
+            {
+                question: "안전설비 투자세액공제는 산업재해 예방을 위한 안전설비 투자에 대하여 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제25조의3(안전설비 투자세액공제)에 따라, 근로자의 안전 확보와 산업재해 예방을 위한 기업의 투자에 대해 세액공제를 제공하여 안전한 작업 환경 조성을 유도합니다."
+            },
+            {
+                question: "안전설비 투자세액공제는 해당 과세연도의 소득세 또는 법인세에서 공제한다.",
+                answer: "O",
+                explanation: "다른 투자세액공제와 동일하게, 해당 시설을 사업에 사용한 날이 속하는 과세연도의 소득세 또는 법인세에서 직접 공제됩니다."
+            },
+            {
+                question: "안전설비 투자세액공제는 최저한세의 적용을 받지 아니한다.",
+                answer: "X",
+                explanation: "안전설비 투자세액공제도 조세특례제한법 제132조에 따라 최저한세 적용 대상입니다. 모든 조세특례가 무제한적으로 적용되는 것을 방지하기 위한 원칙입니다."
+            },
+            {
+                question: "지방투자촉진을 위한 세액감면은 수도권 외의 지역으로 본점 또는 주사무소를 이전하는 법인에 적용될 수 있다.",
+                answer: "O",
+                explanation: "조세특례제한법 제63조(수도권과밀억제권역 외의 지역으로 본사를 이전하는 법인에 대한 세액감면) 등에 따라, 수도권 집중을 완화하고 지역 경제 활성화를 위해 본사 이전에 대한 세금 감면 혜택을 제공합니다."
+            },
+            {
+                question: "지방투자촉진을 위한 세액감면은 이전 후 5년 이내에 사업을 폐지하는 경우, 감면받은 세액을 추징한다.",
+                answer: "O",
+                explanation: "이전 후 일정 기간 동안 사업을 계속 영위하여 지역 경제에 기여해야 한다는 사후관리 요건이 있습니다. 이를 위반할 경우 감면받은 세액이 추징되어 특례의 남용을 방지합니다."
+            },
+            {
+                question: "창업중소기업 세액감면은 수도권과밀억제권역 외의 지역에서 창업한 중소기업에 한하여 적용된다.",
+                answer: "X",
+                explanation: "조세특례제한법 제6조(창업중소기업 등에 대한 세액감면)에 따라 수도권과밀억제권역 내에서도 일정 요건을 충족하는 창업중소기업은 감면을 받을 수 있습니다. 다만, 수도권 과밀억제권역 외의 지역에서 창업한 경우 감면율이나 감면 기간에서 더 유리할 수 있습니다."
+            },
+            {
+                question: "창업중소기업 세액감면은 최초 소득이 발생한 과세연도부터 5년간 감면된다.",
+                answer: "O",
+                explanation: "창업중소기업 세액감면의 감면 기간은 최초 소득이 발생한 과세연도부터 시작하여 5년간 적용됩니다. 이 기간 동안 창업 초기 기업의 안정적인 성장을 지원하는 목적이 있습니다."
+            },
+            {
+                question: "창업중소기업 세액감면 대상 업종은 대통령령으로 정하는 업종에 한정된다.",
+                answer: "O",
+                explanation: "모든 업종이 창업중소기업 세액감면의 대상이 되는 것은 아닙니다. 정부가 육성하고자 하는 특정 산업 분야(예: 제조업, 정보통신업, 지식서비스업 등)에 한정하여 지원하며, 그 구체적인 범위는 대통령령으로 정합니다."
+            },
+            {
+                question: "창업중소기업 세액감면은 법인세와 소득세 모두에 적용된다.",
+                answer: "O",
+                explanation: "개인사업자가 창업한 경우 소득세 감면을, 법인사업자가 창업한 경우 법인세 감면을 적용받을 수 있습니다. 이는 사업 형태와 관계없이 창업을 장려하기 위함입니다."
+            },
+            {
+                question: "창업중소기업 세액감면을 적용받는 기업이 감면기간 중 폐업하는 경우, 감면받은 세액을 추징한다.",
+                answer: "O",
+                explanation: "창업중소기업 세액감면은 기업이 일정 기간 사업을 영위하고 지역 경제에 기여할 것을 전제로 합니다. 감면기간 내 폐업 등 요건을 위반하면 감면받은 세액이 추징되어 특례의 남용을 방지하고 성실한 사업 영위를 유도합니다."
+            },
+            {
+                question: "중소기업에 대한 특별세액감면은 중소기업의 소득세 또는 법인세에 대하여 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제7조(중소기업에 대한 특별세액감면)에 따라, 중소기업의 세금 부담을 경감하여 성장 및 경쟁력 강화를 지원하기 위한 제도입니다. 소득세와 법인세 모두에 적용됩니다."
+            },
+            {
+                question: "중소기업에 대한 특별세액감면율은 업종별로 다르게 적용될 수 있다.",
+                answer: "O",
+                explanation: "중소기업 특별세액감면은 업종별 특성 및 정부의 정책적 중요도에 따라 감면율을 차등 적용할 수 있습니다. 예를 들어, 제조업이나 특정 서비스업종에 더 높은 감면율이 적용될 수 있습니다."
+            },
+            {
+                question: "중소기업에 대한 특별세액감면은 농어촌특별세가 과세되지 않는다.",
+                answer: "X",
+                explanation: "농어촌특별세법 제4조(비과세)에 특별한 비과세 규정이 없는 한, 중소기업에 대한 특별세액감면으로 감면받은 세액은 농어촌특별세의 과세표준이 됩니다. 즉, 감면받은 세액의 일정 비율을 농어촌특별세로 납부해야 합니다."
+            },
+            {
+                question: "중소기업에 대한 특별세액감면은 최저한세의 적용을 받지 아니한다.",
+                answer: "X",
+                explanation: "중소기업에 대한 특별세액감면도 조세특례제한법 제132조에 따라 최저한세 적용 대상입니다. 최저한세는 조세 형평성을 확보하기 위한 제도이므로, 대부분의 감면 특례에 적용됩니다."
+            },
+            {
+                question: "중소기업에 대한 특별세액감면은 창업중소기업 세액감면과 중복하여 적용받을 수 있다.",
+                answer: "X",
+                explanation: "조세특례제한법 제127조(중복지원의 배제)에 따라, 중소기업 특별세액감면과 창업중소기업 세액감면은 일반적으로 중복 적용이 배제됩니다. 두 감면 모두 기업의 소득에 대한 세금 부담을 줄이는 목적을 가지므로, 둘 중 하나만 선택하여 적용받아야 합니다."
+            },
+            {
+                question: "고용을 증대시킨 기업에 대한 세액공제는 상시근로자 수가 증가한 기업에 적용되는 특례이다.",
+                answer: "O",
+                explanation: "조세특례제한법 제29조의5(고용증대 세액공제)에 따라, 기업의 고용 창출 노력을 장려하기 위해 상시근로자 수 증가분에 대해 세액공제를 제공합니다. 이는 일자리 확대 정책의 핵심 수단 중 하나입니다."
+            },
+            {
+                question: "고용을 증대시킨 기업에 대한 세액공제는 해당 과세연도의 소득세 또는 법인세에서 공제한다.",
+                answer: "O",
+                explanation: "세액공제는 산출된 세액에서 직접 차감되는 방식이므로, 개인사업자의 소득세 또는 법인의 법인세에서 공제됩니다."
+            },
+            {
+                question: "고용을 증대시킨 기업에 대한 세액공제는 중소기업에 한하여 적용된다.",
+                answer: "X",
+                explanation: "고용증대 세액공제는 중소기업뿐만 아니라 중견기업, 대기업에도 적용될 수 있으나, 기업 규모별로 공제율이나 한도 등이 차등 적용되어 중소기업에 더 많은 혜택이 주어집니다."
+            },
+            {
+                question: "고용을 증대시킨 기업에 대한 세액공제는 5년간 이월하여 공제할 수 있다.",
+                answer: "X",
+                explanation: "고용증대 세액공제도 다른 세액공제와 마찬가지로 미공제액 발생 시 일반적으로 10년간 이월하여 공제할 수 있습니다. (조세특례제한법 제144조)"
+            },
+            {
+                question: "정규직 전환 세액공제는 비정규직 근로자를 정규직으로 전환하는 기업에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제30조의3(정규직 근로자로의 전환에 대한 세액공제)에 따라, 기업이 비정규직 근로자를 정규직으로 전환함으로써 고용의 질을 개선하는 노력을 장려하기 위한 제도입니다."
+            },
+            {
+                question: "정규직 전환 세액공제는 전환된 근로자 수에 비례하여 공제액이 결정된다.",
+                answer: "O",
+                explanation: "전환된 근로자 1인당 일정 금액을 공제하는 방식으로, 전환된 근로자 수가 많을수록 공제액이 커집니다. 이는 정규직 전환을 적극적으로 유도하기 위함입니다."
+            },
+            {
+                question: "정규직 전환 세액공제는 해당 과세연도의 소득세 또는 법인세에서 공제한다.",
+                answer: "O",
+                explanation: "세액공제는 산출된 세액에서 직접 차감되므로, 해당 과세연도의 소득세 또는 법인세에서 공제됩니다."
+            },
+            {
+                question: "정규직 전환 세액공제 적용 후 1년 이내에 전환된 근로자를 해고하는 경우, 공제받은 세액을 추징할 수 있다.",
+                answer: "O",
+                explanation: "정규직 전환의 지속성을 확보하고 제도의 남용을 방지하기 위해 사후관리 규정이 적용됩니다. 전환 후 일정 기간 내에 고용 유지가 되지 않으면 공제받은 세액이 추징될 수 있습니다."
+            },
+            {
+                question: "해외진출기업의 국내복귀 지원을 위한 세액감면은 해외에서 국내로 사업장을 이전하는 기업에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제104조의24(해외진출기업의 국내복귀에 대한 세액감면 등)에 따라, 해외로 나갔던 우리 기업이 국내로 복귀하여 국내 투자와 고용을 창출하는 것을 지원하기 위한 제도입니다."
+            },
+            {
+                question: "해외진출기업의 국내복귀 지원을 위한 세액감면은 수도권과밀억제권역으로 복귀하는 경우에도 적용될 수 있다.",
+                answer: "X",
+                explanation: "해외진출기업의 국내복귀 지원을 위한 세액감면은 수도권과밀억제권역 외의 지역으로 복귀하는 경우에 한하여 적용되는 것이 원칙입니다. 이는 지방 균형 발전을 도모하고 수도권 집중을 완화하려는 정책적 목적이 있기 때문입니다."
+            },
+            {
+                question: "해외진출기업의 국내복귀 지원을 위한 세액감면은 법인세와 소득세 모두에 적용된다.",
+                answer: "O",
+                explanation: "국내로 복귀하는 법인 및 개인사업자 모두에게 적용되어 세금 부담을 줄여주는 제도입니다."
+            },
+            {
+                question: "청년고용증대 세액공제는 15세 이상 34세 이하의 청년 상시근로자 수가 증가한 경우에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제29조의5(고용증대 세액공제)에 포함된 내용으로, 청년층의 고용을 특별히 장려하기 위해 청년 근로자의 연령 기준을 명확히 하고 공제 혜택을 제공합니다."
+            },
+            {
+                question: "청년고용증대 세액공제는 중견기업에도 적용된다.",
+                answer: "O",
+                explanation: "청년고용증대 세액공제는 중소기업뿐만 아니라 중견기업에도 적용됩니다. 다만, 기업 규모에 따라 공제율에 차이가 있을 수 있습니다."
+            },
+            {
+                question: "사회적기업에 대한 세액감면은 사회적기업육성법에 따라 인증받은 사회적기업에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제85조의6(사회적기업에 대한 세액감면)에 따라, 사회적 목적을 추구하며 사회서비스 제공 및 취약계층 일자리 창출에 기여하는 사회적기업을 지원하기 위한 제도입니다. '사회적기업육성법'에 따른 인증이 필수 요건입니다."
+            },
+            {
+                question: "사회적기업에 대한 세액감면은 법인세와 소득세 모두에 적용된다.",
+                answer: "O",
+                explanation: "사회적기업의 형태가 법인이든 개인이든 상관없이 해당 사업에서 발생한 소득에 대해 세액감면 혜택을 받을 수 있습니다."
+            },
+            {
+                question: "조합법인 등에 대한 법인세 감면은 농업협동조합, 수산업협동조합 등 특정 조합법인에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제74조(농업협동조합 등에 대한 법인세 감면) 등에 따라, 특정 공익 목적을 가진 협동조합의 사업 활동을 지원하기 위해 법인세 감면 혜택을 제공합니다. 이는 농업 및 수산업 발전을 장려하기 위한 정책적 목적이 있습니다."
+            },
+            {
+                question: "조합법인 등에 대한 법인세 감면은 감면율이 100%이다.",
+                answer: "X",
+                explanation: "조합법인 등에 대한 법인세 감면은 감면율이 100%인 경우가 있으나, 사업 종류나 요건에 따라 감면율이 다르게 적용될 수 있습니다. 모든 조합법인이 100% 감면을 받는 것은 아닙니다."
+            },
+            {
+                question: "중소기업 취업자에 대한 소득세 감면은 감면 대상 소득에 한하여 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제30조(중소기업 취업자에 대한 소득세 감면)에 따라, 청년, 고령자, 장애인 등 특정 대상자가 중소기업에 취업하여 받는 소득에 대해 세금을 감면해줍니다. 이는 특정 계층의 중소기업 취업을 장려하기 위함입니다."
+            },
+            {
+                question: "중소기업 취업자에 대한 소득세 감면은 청년 취업자에게만 적용된다.",
+                answer: "X",
+                explanation: "중소기업 취업자에 대한 소득세 감면은 청년 외에도 60세 이상 고령자, 장애인, 경력단절여성 등에게도 적용됩니다. 대상 범위가 청년에 한정되지 않습니다."
+            },
+            {
+                question: "중소기업 핵심인력 성과보상기금(내일채움공제)에 대한 세액공제는 기업과 근로자 모두에게 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제29조의6(성과보상기금에 대한 세액공제)에 따라, 기업이 핵심인력에게 성과보상기금(내일채움공제)을 납입하는 경우 기업은 세액공제를, 근로자는 일정 요건 하에 비과세 또는 소득세 감면 혜택을 받을 수 있습니다. 이는 중소기업의 핵심인력 이탈 방지 및 장기 재직 유도를 위한 제도입니다."
+            },
+            {
+                question: "성과공유 중소기업에 대한 세액공제는 성과공유제를 도입한 중소기업에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제19조(성과공유기업에 대한 세액공제)에 따라, 기업의 성과를 근로자와 공유하는 제도를 도입한 중소기업에게 세금 혜택을 부여하여 노사 협력을 증진하고 근로자의 성과 향상을 유도합니다."
+            },
+            {
+                question: "성과공유 중소기업에 대한 세액공제는 기업이 근로자에게 지급하는 성과공유 기여금에 대해 적용된다.",
+                answer: "O",
+                explanation: "기업이 근로자에게 지급하는 성과공유 기여금(성과급, 우리사주 등)에 대해 세액공제 혜택을 제공하여, 기업의 인건비 부담을 경감하고 성과 공유 문화 확산을 장려합니다."
+            },
+            {
+                question: "기술이전 및 기술대여 등에 대한 과세특례는 기술이전소득에 대한 소득세 또는 법인세를 감면한다.",
+                answer: "O",
+                explanation: "조세특례제한법 제12조(기술이전 및 기술대여 등에 대한 과세특례)에 따라, 기업이 개발한 기술을 이전하거나 대여하여 발생하는 소득에 대해 세금을 감면하여 기술 혁신 및 기술 거래 활성화를 유도합니다."
+            },
+            {
+                question: "기술이전 및 기술대여 등에 대한 과세특례는 특허권 등 산업재산권에 한하여 적용된다.",
+                answer: "X",
+                explanation: "특허권 외에도 실용신안권, 디자인권, 반도체집적회로의 배치설계권, 컴퓨터프로그램저작권 등 다양한 산업재산권 및 기술 노하우 등 대통령령으로 정하는 기술에 대해서도 적용될 수 있습니다."
+            },
+            {
+                question: "외국인 기술자에 대한 소득세 감면은 외국인 기술자의 소득에 대하여 일정 기간 감면한다.",
+                answer: "O",
+                explanation: "조세특례제한법 제18조(외국인 기술자에 대한 소득세의 감면)에 따라, 국내 첨단산업 분야에 종사하는 외국인 기술자의 소득세 부담을 줄여 우수한 해외 인력 유치를 장려하고 국내 기술 경쟁력을 강화하는 목적이 있습니다."
+            },
+            {
+                question: "외국인 기술자에 대한 소득세 감면은 대한민국 국적을 취득한 외국인에게도 적용된다.",
+                answer: "X",
+                explanation: "외국인 기술자 소득세 감면은 대한민국 국적을 취득하지 않은 '외국인'에게 적용되는 특례입니다. 대한민국 국적을 취득하면 내국인으로 간주되어 이 특례를 적용받을 수 없습니다."
+            },
+            {
+                question: "제주국제자유도시 개발센터에 대한 법인세 감면은 제주국제자유도시특별법에 따라 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제102조(제주국제자유도시 개발센터에 대한 법인세 등 감면)는 제주특별자치도 설치 및 국제자유도시 조성을 위한 특별법에 근거하여 제주국제자유도시 개발센터의 특정 사업에 대한 법인세 등을 감면합니다."
+            },
+            {
+                question: "제주투자진흥지구 입주기업에 대한 법인세 등 감면은 제주투자진흥지구에 입주한 기업에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제104조의7(제주투자진흥지구 입주기업에 대한 법인세 등 감면)에 따라, 제주 투자진흥지구로 지정된 지역에 입주하여 사업을 영위하는 기업에 대해 세금 혜택을 부여하여 제주 지역 경제 활성화를 도모합니다."
+            },
+            {
+                question: "사회적협동조합 등에 대한 법인세 감면은 일반 협동조합에도 적용된다.",
+                answer: "X",
+                explanation: "조세특례제한법 제73조(사회적협동조합 등에 대한 법인세 감면)는 사회적협동조합, 신용협동조합 등 특정 목적을 가진 조합에 한하여 적용됩니다. 일반 협동조합에는 별도의 감면 규정이 적용될 수 있습니다."
+            },
+            {
+                question: "공익사업용 토지 등에 대한 양도소득세 감면은 공익사업을 위한 토지 등의 취득 및 보상에 관한 법률에 따라 수용되는 토지에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제77조(공익사업용 토지 등에 대한 양도소득세의 감면)에 따라, 국가 또는 지방자치단체가 공익사업을 위해 토지 등을 수용하는 경우, 해당 양도소득에 대해 세금을 감면하여 공익사업의 원활한 추진과 피수용자의 재산권 보호를 도모합니다."
+            },
+            {
+                question: "공익사업용 토지 등에 대한 양도소득세 감면은 100% 감면이다.",
+                answer: "X",
+                explanation: "공익사업용 토지 등에 대한 양도소득세 감면은 경우에 따라 100% 감면이 적용될 수도 있지만(예: 사업인정고시일 등 요건 충족 시), 일반적으로는 양도 방법에 따라 감면율이 다르게 적용될 수 있습니다. (예: 현금 보상 시 10%, 채권 보상 시 15%, 사업용 고정자산 취득 시 100% 등)"
+            },
+            {
+                question: "비과세·감면되는 이자소득 및 배당소득은 금융기관의 파산 등으로 발생한 손실을 보전하기 위한 이자소득에 한정된다.",
+                answer: "X",
+                explanation: "비과세·감면되는 이자소득 및 배당소득은 특정 저축 상품(예: 장기주택마련저축), 특정 연금 상품, 농어가 목돈마련저축, 조합예탁금 등에 대한 이자·배당소득 등 매우 다양하게 규정되어 있습니다. 금융기관 파산 보전 목적에만 한정되지 않습니다."
+            },
+            {
+                question: "주택종합저축 소득공제는 총급여액이 일정 금액 이하인 근로자에게만 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제87조(주택종합저축에 대한 소득공제)에 따라, 무주택 근로자의 주택 마련을 지원하기 위해 총급여액이 일정 기준 이하인 경우에 한하여 주택청약종합저축 납입액에 대해 소득공제를 적용합니다. 고소득자의 불필요한 혜택을 제한하려는 목적이 있습니다."
+            },
+            {
+                question: "연금저축 소득공제는 연금저축 납입액에 대하여 적용되며, 종합소득금액에서 공제한다.",
+                answer: "X",
+                explanation: "조세특례제한법 제90조의3(연금계좌세액공제)에 따라 연금저축 납입액에 대해서는 소득공제가 아닌 '세액공제'가 적용됩니다. 종합소득금액에서 공제하는 것이 아니라, 산출된 세액에서 직접 공제하는 방식입니다."
+            },
+            {
+                question: "벤처기업 투자 소득공제는 벤처기업에 투자한 개인에게 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제16조(벤처기업투자 등에 대한 소득공제)에 따라, 개인 투자자가 벤처기업에 직접 투자하거나 벤처투자조합 등에 출자하는 경우 소득공제 혜택을 부여하여 벤처기업의 자금 조달을 돕고 혁신 성장을 유도합니다."
+            },
+            {
+                question: "벤처기업 투자 소득공제는 벤처기업 주식 취득에 한정되며, 출자지분 취득은 제외된다.",
+                answer: "X",
+                explanation: "벤처기업 투자 소득공제는 벤처기업의 주식 취득뿐만 아니라, 벤처투자조합이나 신기술사업투자조합 등 지분투자조합에 출자한 경우에도 적용됩니다. 직접 투자와 간접 투자를 모두 장려합니다."
+            },
+            {
+                question: "벤처기업 투자를 위한 지분투자조합 등 출자 소득공제는 지분투자조합에 출자한 경우에 적용된다.",
+                answer: "O",
+                explanation: "벤처기업 투자를 위한 지분투자조합에 출자한 경우, 해당 출자금액에 대해 소득공제 혜택을 받을 수 있습니다. 이는 개인 투자자들이 간접적인 방식으로 벤처기업에 자금을 공급하는 것을 지원합니다."
+            },
+            {
+                question: "장기집합투자증권 저축 소득공제는 특정 장기집합투자증권에 가입한 경우에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제91조의14(장기집합투자증권 저축 소득공제)에 따라, 투자자가 장기적인 관점에서 특정 집합투자증권(펀드)에 투자하는 경우 소득공제를 제공하여 장기 투자를 유도하고 자본시장 발전을 도모합니다."
+            },
+            {
+                question: "소상공인 사업자금 대출에 대한 이자소득세 감면은 소상공인이 은행으로부터 사업자금을 대출받은 경우에 적용된다.",
+                answer: "X",
+                explanation: "조세특례제한법 제96조의3(소상공인에 대한 이자소득세 감면)은 소상공인이 '정책자금' 또는 '정부가 지정한 특정 대출'을 받은 경우 발생하는 이자소득에 대해 세금을 감면하는 것이지, 모든 은행 대출에 적용되는 것은 아닙니다. 소상공인의 자금 조달 부담을 덜어주기 위함입니다."
+            },
+            {
+                question: "고향사랑기부금 세액공제는 고향사랑기부금법에 따라 기부한 경우에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제90조의2(고향사랑기부금에 대한 세액공제)에 따라, 개인이 자신의 주소지가 아닌 다른 지방자치단체에 고향사랑기부금을 기부할 경우 세금 혜택을 받을 수 있습니다. 이는 지방 재정 확충과 지역 활성화를 목표로 합니다."
+            },
+            {
+                question: "고향사랑기부금 세액공제는 지방세에서 공제한다.",
+                answer: "X",
+                explanation: "고향사랑기부금 세액공제는 국세(소득세 또는 법인세)에서 공제합니다. 지방세가 아닌 국가에서 세금 혜택을 제공하여 기부를 장려합니다."
+            },
+            {
+                question: "기부금 세액공제는 법정기부금과 지정기부금에 대하여 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제76조(기부금 세액공제) 및 소득세법, 법인세법에 따라, 국가 등에 기부하는 법정기부금과 공익성이 인정되는 단체에 기부하는 지정기부금 모두에 대해 세액공제 혜택을 제공합니다. 이는 사회 전반의 기부 문화를 활성화하기 위함입니다."
+            },
+            {
+                question: "정치자금 기부금 세액공제는 10만원 이하의 금액에 대해서는 100/110을 세액공제한다.",
+                answer: "O",
+                explanation: "정치자금법 및 조세특례제한법 제76조에 따라, 10만원 이하의 정치자금 기부금에 대해서는 100/110(100% + 10% 지방소득세)을 세액공제합니다. 10만원을 초과하는 금액에 대해서는 별도의 공제율이 적용됩니다."
+            },
+            {
+                question: "성실사업자에 대한 의료비 세액공제는 종합소득세 신고 시 적용받을 수 있다.",
+                answer: "O",
+                explanation: "조세특례제한법 제122조의3(성실사업자에 대한 의료비 및 교육비 세액공제)에 따라, 성실신고사업자에 대해 근로자와 유사하게 의료비에 대한 세액공제를 적용하여 세 부담을 완화하고 성실한 납세를 유도합니다."
+            },
+            {
+                question: "성실사업자에 대한 교육비 세액공제는 성실사업자의 자녀 교육비에 한하여 적용된다.",
+                answer: "X",
+                explanation: "성실사업자에 대한 교육비 세액공제는 본인, 기본공제 대상 배우자, 자녀 등의 교육비에 대해 적용될 수 있습니다. 자녀에게만 한정되는 것은 아닙니다."
+            },
+            {
+                question: "자원봉사용역에 대한 소득세 감면은 자원봉사단체에 무상으로 용역을 제공한 경우에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제104조의28(자원봉사용역에 대한 소득세 감면)에 따라, 사회 공헌 활동을 장려하기 위해 자원봉사활동에 대한 소득세 감면 혜택을 제공합니다."
+            },
+            {
+                question: "자원봉사용역에 대한 소득세 감면은 자원봉사활동 인정기관이 확인한 경우에 한하여 적용된다.",
+                answer: "O",
+                explanation: "감면의 적정성을 확보하고 사후 관리를 용이하게 하기 위해, 공신력 있는 자원봉사활동 인정기관의 확인이 있어야 소득세 감면을 받을 수 있습니다."
+            },
+            {
+                question: "위기지역 창업기업에 대한 세액감면은 정부가 지정한 위기지역에서 창업한 기업에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제99조의11(위기지역 창업기업에 대한 세액감면)에 따라, 산업 위기 지역 등 정부가 지정한 지역에 창업하는 기업에 대해 세금 감면 혜택을 부여하여 해당 지역의 경제 활성화 및 일자리 창출을 지원합니다."
+            },
+            {
+                question: "위기지역 창업기업에 대한 세액감면은 3년간 100% 감면이다.",
+                answer: "X",
+                explanation: "위기지역 창업기업에 대한 세액감면은 일반적으로 일정 기간 동안 100% 감면이 적용될 수 있으나, 기간 및 감면율은 법령 개정이나 지역 지정 기준에 따라 달라질 수 있습니다. 무조건 3년 100%는 아닙니다."
+            },
+            {
+                question: "상생협력 중소기업에 대한 세액공제는 상생협력 관계를 맺은 중소기업에 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법 제10조의2(상생협력 중소기업에 대한 세액공제)에 따라, 대기업과 중소기업 간, 또는 중소기업 간의 상생협력을 장려하기 위해 협력 활동을 하는 기업에 대해 세액공제 혜택을 부여합니다."
+            },
+            {
+                question: "조세특례의 사후관리는 조세특례의 목적 달성 여부 및 조세특례 적용의 적정성을 검토하기 위하여 실시한다.",
+                answer: "O",
+                explanation: "조세특례제한법은 다양한 사후관리 규정을 두고 있습니다. 이는 세금 감면 혜택을 받은 기업이 특례의 본래 목적에 맞게 활동하고 있는지, 그리고 특례 요건을 지속적으로 충족하는지 확인하여 제도의 남용을 방지하고 효과를 극대화하기 위함입니다."
+            },
+            {
+                question: "조세특례를 적용받은 후 사후관리 요건을 충족하지 못한 경우, 감면받은 세액을 추징당할 수 있다.",
+                answer: "O",
+                explanation: "사후관리 규정은 세액공제나 감면을 받은 후 일정 요건을 지키지 않을 경우, 이미 감면받은 세액을 다시 납부하도록 하는 추징 규정을 포함합니다. 이는 특례 제도의 실효성을 확보하는 핵심 장치입니다."
+            },
+            {
+                question: "추징세액에는 이자상당액이 가산되지 않는다.",
+                answer: "X",
+                explanation: "추징되는 세액에는 감면받은 기간 동안의 이자 상당액이 가산되어 부과됩니다. 이는 납세자가 본래 납부했어야 할 세액을 뒤늦게 납부하는 것에 대한 기회비용을 보전하고, 추징의 실효성을 높이기 위함입니다."
+            },
+            {
+                question: "조세특례의 제한에 관한 규정은 조세특례가 남용되는 것을 방지하기 위한 것이다.",
+                answer: "O",
+                explanation: "최저한세, 중복지원 배제, 사후관리 등의 규정은 조세특례가 무분별하게 적용되거나 남용되어 조세 형평성을 해치고 국가 재정에 부담을 주는 것을 방지하기 위한 제도적 장치입니다."
+            },
+            {
+                question: "최저한세액 계산 시에는 비과세 및 감면세액을 포함하여 계산한다.",
+                answer: "X",
+                explanation: "최저한세액은 과세표준에 최저한세율을 곱하여 계산하며, 비과세 및 감면세액을 '적용하기 전'의 세액을 기준으로 최저한세를 산출합니다. 즉, 감면을 받은 후에도 최소한의 세금은 납부하도록 하는 것이 목적이므로, 감면액을 고려하여 세금을 더 낼 수 있습니다."
+            },
+            {
+                question: "최저한세액은 해당 과세연도의 과세표준에 최저한세율을 곱하여 계산한다.",
+                answer: "O",
+                explanation: "최저한세액의 산정 방식은 해당 과세연도의 과세표준에 조세특례제한법에서 정하는 최저한세율(기업 규모 등에 따라 상이)을 곱하여 계산합니다."
+            },
+            {
+                question: "중소기업에 대한 특별세액감면은 최저한세의 적용을 받지 않는다.",
+                answer: "X",
+                explanation: "중소기업에 대한 특별세액감면도 조세특례제한법 제132조에 따라 최저한세 적용 대상입니다. 다만, 감면율이 높아도 최저한세율이 상대적으로 낮아 실제 적용되는 사례가 많습니다."
+            },
+            {
+                question: "조세특례제한법에 따른 세액공제는 농어촌특별세의 과세대상에 포함되지 않는다.",
+                answer: "X",
+                explanation: "농어촌특별세법 제3조에 따라 조세특례제한법에 의해 감면받는 세액은 원칙적으로 농어촌특별세의 과세대상에 포함됩니다. 즉, 감면받은 세액의 일정 비율(보통 20%)을 농어촌특별세로 납부해야 합니다."
+            },
+            {
+                question: "조세특례 적용과 관련하여 세법 개정 등으로 인하여 불리하게 된 경우, 종전 규정을 적용할 수 있다.",
+                answer: "O",
+                explanation: "조세특례제한법 제143조(세법개정 등으로 인한 불이익 보전)에 따라 납세자에게 불리한 세법 개정이 이루어진 경우, 신뢰보호의 원칙에 따라 납세자는 종전 규정을 적용받을 수 있습니다. 이는 납세자의 예측 가능성과 권리 보호를 위한 조항입니다."
+            },
+            {
+                question: "조세특례제한법에서 대통령령으로 정하는 사항은 기획재정부장관이 고시한다.",
+                answer: "X",
+                explanation: "대통령령으로 정하는 사항은 '대통령령(시행령)'으로 규정됩니다. 기획재정부장관이 고시하는 사항은 주로 법률이나 시행령에서 위임한 세부적인 사항, 지침, 기준 등입니다."
+            },
+            {
+                question: "조세특례제한법은 세법상 일반 원칙에 우선하여 적용된다.",
+                answer: "O",
+                explanation: "조세특례제한법은 일반적인 세법(예: 소득세법, 법인세법)에 대한 특별법의 지위를 가집니다. 따라서 동일한 사안에 대해 일반 세법과 조세특례제한법이 충돌할 경우, 조세특례제한법이 우선 적용됩니다."
+            },
+            {
+                question: "조세특례제한법상 특례를 적용받기 위해서는 법정 서류를 기한 내에 제출해야 한다.",
+                answer: "O",
+                explanation: "대부분의 조세특례는 신청 및 신고를 요하는 경우가 많으며, 해당 특례를 적용받기 위해서는 법령에서 정한 서류를 정해진 기한 내에 관할 세무서장에게 제출해야 합니다. 이는 행정의 효율성과 투명성을 위한 절차입니다."
+            },
+            {
+                question: "조세특례제한법은 매년 국회의 심의를 거쳐 개정될 수 있다.",
+                answer: "O",
+                explanation: "조세특례제한법은 정부의 경제 정책 방향이나 특정 산업 지원 필요성 등에 따라 매년 세법 개정안에 포함되어 국회의 심의를 거쳐 개정될 수 있습니다. 경제 상황 변화에 유연하게 대응하기 위함입니다."
+            },
+            {
+                question: "조세특례제한법의 적용을 받는 과세기간 중 사업을 폐지하는 경우, 즉시 세무서장에게 신고해야 한다.",
+                answer: "O",
+                explanation: "사업을 폐지하는 경우, 부가가치세법 등 관련 세법에 따라 폐업 신고 의무가 발생하며, 이는 조세특례의 사후관리와도 연관됩니다. 정확한 신고를 통해 세금 추징 등의 불이익을 방지할 수 있습니다."
+            },
+            {
+                question: "조세특례 적용 시 중복적용 배제 규정이 없는 경우에도, 실질적으로 동일한 목적의 특례는 중복하여 적용할 수 없다.",
+                answer: "X",
+                explanation: "원칙적으로 중복적용 배제 규정이 명확히 존재하지 않는 한 중복 적용이 가능합니다. 다만, '동일한 목적'이라는 판단은 자의적일 수 있어 법적 명확성이 중요하며, 법률에 명시된 중복 배제 규정(예: 제127조)을 우선 적용합니다."
+            },
+            {
+                question: "조세특례제한법상 감면세액은 조세채권에 대한 우선 변제의 대상이 아니다.",
+                answer: "O",
+                explanation: "조세채권은 국가의 중요한 채권으로서 법정 요건에 따라 우선 변제권을 가집니다. 감면세액은 조세채무 자체가 경감되는 것이므로, 우선 변제 대상에 해당하지 않습니다. 이미 경감된 부분이기 때문입니다."
+            },
+            {
+                question: "조세특례제한법상 감면액 계산 시 소수점 이하의 금액은 절사한다.",
+                answer: "X",
+                explanation: "일반적으로 세액 계산 시 원 단위 미만은 버리거나 반올림하는 규정이 있으나, 소수점 이하의 금액을 무조건 절사하는 것이 원칙은 아닙니다. 구체적인 계산 규정은 각 세법에서 정하고 있습니다."
+            },
+            {
+                question: "조세특례제한법상 감면은 원칙적으로 납세의무자의 신청에 의해 적용된다.",
+                answer: "O",
+                explanation: "대부분의 조세특례는 납세자의 신청이 있어야 적용됩니다. 이는 특례의 적용 요건을 납세자 스스로 판단하고 입증할 책임이 있음을 의미하며, 세무 당국의 효율적인 관리를 위해서도 필요합니다."
+            },
+            {
+                question: "조세특례제한법상 특정 특례의 적용을 받으면 다른 특례의 적용이 자동적으로 배제되는 경우가 있다.",
+                answer: "O",
+                explanation: "조세특례제한법 제127조(중복지원의 배제)와 같이, 동일한 목적을 가진 유사한 특례 간에는 중복 적용을 배제하는 규정이 명시적으로 존재합니다. 이는 과도한 조세 지원을 방지하기 위함입니다."
+            },
+            {
+                question: "조세특례제한법상 감면세액을 산정함에 있어 소득세법 또는 법인세법에 따른 산출세액이 없는 경우에도 감면을 받을 수 있다.",
+                answer: "X",
+                explanation: "세액 감면은 산출세액을 전제로 합니다. 산출세액 자체가 없으면 감면할 세액이 없으므로 감면을 받을 수 없습니다. 다만, 이월공제가 가능한 세액공제의 경우에는 산출세액이 없어도 발생한 공제액을 다음 연도로 넘길 수 있습니다."
+            },
+            {
+                question: "조세특례제한법상 과세특례는 세액감면뿐만 아니라 소득공제, 세액공제, 비과세 등 다양한 형태로 나타난다.",
+                answer: "O",
+                explanation: "조세특례제한법은 단순히 세액을 깎아주는 '감면' 외에도, 세금 계산의 기초가 되는 소득을 줄여주는 '소득공제', 세금 자체를 줄여주는 '세액공제', 아예 세금을 부과하지 않는 '비과세' 등 다양한 형태로 기업과 개인의 세금 부담을 줄여줍니다."
+            },
+            {
+                question: "조세특례제한법상 특례는 특정 산업이나 지역을 지원하기 위한 정책적 목적을 가진다.",
+                answer: "O",
+                explanation: "조세특례는 정부가 특정 정책 목표를 달성하기 위한 수단으로 활용됩니다. 예를 들어, 연구개발 투자를 장려하거나, 특정 지역의 경제 활성화를 도모하는 등 산업 정책 및 지역 균형 발전을 지원하는 목적이 큽니다."
+            },
+            {
+                question: "조세특례제한법은 일몰규정을 두어 일정 기간이 지나면 효력을 상실하게 할 수 있다.",
+                answer: "O",
+                explanation: "대부분의 조세특례는 '일몰규정(Sunset Clause)'을 가지고 있어, 일정 기간이 경과하면 자동적으로 효력을 상실합니다. 이는 특례가 영구적으로 지속되는 것을 방지하고, 정책 환경 변화에 따라 재검토하거나 폐지할 수 있도록 유연성을 부여합니다."
+            },
+            {
+                question: "조세특례제한법에 따른 특례 적용 시, 동일한 과세연도에 여러 특례를 중복 적용받을 수 없다.",
+                answer: "X",
+                explanation: "원칙적으로 서로 다른 종류의 특례(예: 세액감면과 세액공제)는 중복 적용이 가능합니다. 다만, 조세특례제한법 제127조 등에서 명시적으로 중복 적용을 배제하는 규정이 있는 경우에만 중복 적용이 불가능합니다."
+            },
+            {
+                question: "조세특례제한법은 주로 기업의 투자 및 고용 창출을 유도하기 위한 규정을 포함한다.",
+                answer: "O",
+                explanation: "조세특례제한법은 기업의 설비 투자, 연구·인력개발 투자, 고용 증가 등 경제 활성화 및 일자리 창출과 관련된 다양한 조세 지원 규정을 포함하고 있습니다. 이는 국가 경제 성장을 촉진하기 위한 핵심 정책 수단입니다."
+            },
+            {
+                question: "조세특례제한법상 '중소기업'의 범위는 각 특례마다 다르게 정의될 수 있다.",
+                answer: "X",
+                explanation: "조세특례제한법에서 '중소기업'의 범위는 동법 시행령 제2조 및 중소기업기본법에 따라 원칙적으로 동일하게 정의됩니다. 다만, 특정 특례의 경우 '중소기업 중에서도 특정 요건(예: 매출액 규모)을 충족하는 기업' 등으로 대상을 한정할 수는 있습니다."
+            },
+            {
+                question: "조세특례제한법상 감면세액을 계산할 때, 총 수입금액에서 감면대상 수입금액을 안분 계산할 수 있다.",
+                answer: "O",
+                explanation: "감면 대상 사업과 비감면 대상 사업을 겸영하는 경우, 전체 수입금액 중 감면 대상 사업에서 발생한 수입금액을 기준으로 감면 비율을 안분 계산하여 적용합니다. 이는 감면 혜택이 특정 사업에만 정확히 적용되도록 하기 위함입니다."
+            },
+            {
+                question: "조세특례제한법상 특례 적용 시, 해당 기업이 조세특례의 목적에 부합하는 활동을 지속적으로 수행하는지 사후관리를 한다.",
+                answer: "O",
+                explanation: "조세특례는 기업이 특정 정책 목적을 달성하는 데 기여하는 것을 전제로 하므로, 특례 적용 후에도 그 목적에 맞는 활동을 지속하는지 여부를 사후적으로 관리합니다. 요건 위반 시 추징이 발생할 수 있습니다."
+            },
+            {
+                question: "조세특례제한법상 특례가 적용되는 자산의 양도 또는 사용 목적 변경 시, 감면받은 세액이 추징될 수 있다.",
+                answer: "O",
+                explanation: "투자세액공제 등을 받은 자산이 특례의 목적과 다르게 처분되거나 사용 목적이 변경되는 경우, 특례의 취지를 훼손한다고 보아 감면받은 세액이 추징될 수 있습니다. 이는 제도의 남용을 방지하기 위함입니다."
+            },
+            {
+                question: "조세특례제한법은 대한민국 영토 내에서 발생한 소득에 한하여 적용된다.",
+                answer: "X",
+                explanation: "조세특례제한법은 원칙적으로 국내에서 발생하는 소득에 적용되지만, 해외진출기업의 국내복귀 지원과 같이 예외적으로 해외에서 발생한 소득이나 해외 관련 활동에 대해서도 특례를 적용하는 경우가 있습니다. 또한 외국법인의 국내 연구개발 활동에 대한 공제처럼 국제적 관점도 포함될 수 있습니다."
+            }
+        ];
+
+        /**
+         * Loads embedded quiz data synchronously.
+         * @returns {Promise<Array>} Quiz data array
+         */
+        async function loadQuizData() {
+            // Use the new, larger quiz data for 조세특례제한법
+            return taxSpecialRestrictionLawQuizData;
+        }
+
+        // ============================ Quiz start and initialization ============================
+        /**
+         * Initializes and starts the quiz.
+         * @param {number} numQuestions - Number of questions to play
+         */
+        async function startQuiz(numQuestions) {
+            allQuizData = await loadQuizData(); // Load embedded quiz data
+            if (allQuizData.length === 0) {
+                showMessage("앗! 퀴즈 문제를 찾을 수 없어... 😥");
+                showScreen('start');
+                return;
+            }
+
+            // If requested number of questions is more than total questions, use all questions
+            if (numQuestions > allQuizData.length) {
+                quizTotalQuestions = allQuizData.length;
+                showMessage(`요청한 문제 수(${numQuestions}개)가 전체 문제 수(${allQuizData.length}개)보다 많습니다. 전체 ${quizTotalQuestions}문제를 사용해요!`);
+            } else {
+                quizTotalQuestions = numQuestions;
+            }
+
+            // Shuffle all questions and slice by requested number
+            const shuffledAllQuestions = [...allQuizData];
+            shuffleArray(shuffledAllQuestions);
+            currentQuizData = shuffledAllQuestions.slice(0, quizTotalQuestions);
+
+            // Initialize
+            currentQuestionIndex = 0;
+            score = 0; // Reset raw score
+            incorrectQuestions = [];
+            selectedChoice = null;
+            isAnswerChecked = false;
+            timer = 0; // Reset timer
+            startTimer(); // Start the timer
+
+            showScreen('quiz');
+            updateQuizHeaderVisibility(true); // Show quiz header
+            questionChoicesArea.classList.remove('hidden'); // Show choices area
+            quizControls.classList.remove('hidden'); // Show quiz control buttons
+            displayQuestion();
+            playStartSound(); // Play sound on quiz start
+        }
+
+        /**
+         * Restarts the quiz (full or incorrect questions).
+         * @param {number|'incorrect'} mode - Number of questions to restart with, or 'incorrect' for incorrect questions
+         */
+        function restartQuiz(mode) {
+            if (mode === 'incorrect') {
+                currentQuizData = [...incorrectQuestions]; // Set quiz data to incorrect questions
+                if (currentQuizData.length === 0) {
+                    showMessage('와! 틀린 문제가 하나도 없어! 대단해! 👍');
+                    showScreen('end'); // Stay on end screen if no incorrect questions
+                    return;
+                }
+                shuffleArray(currentQuizData); // Shuffle incorrect questions too
+                quizTotalQuestions = currentQuizData.length;
+            } else {
+                const shuffledAllQuestions = [...allQuizData];
+                shuffleArray(shuffledAllQuestions);
+                currentQuizData = shuffledAllQuestions.slice(0, quizTotalQuestions);
+            }
+
+            // Initialize
+            currentQuestionIndex = 0;
+            score = 0; // Reset raw score
+            incorrectQuestions = [];
+            selectedChoice = null;
+            isAnswerChecked = false;
+            timer = 0; // Reset timer
+            startTimer(); // Start the timer
+
+            showScreen('quiz');
+            updateQuizHeaderVisibility(true); // Show quiz header
+            questionChoicesArea.classList.remove('hidden'); // Show choices area
+            quizControls.classList.remove('hidden'); // Show quiz control buttons
+            displayQuestion();
+            playStartSound(); // Play sound on quiz restart
+        }
+
+        /**
+         * Starts the review mode for incorrect questions.
+         */
+        function startReviewMode() {
+            restartQuiz('incorrect'); // Call restart quiz with 'incorrect' mode
+        }
+
+        // ============================ Timer functions ============================
+        /**
+         * Starts the quiz timer.
+         */
+        function startTimer() {
+            if (timerIntervalId) {
+                clearInterval(timerIntervalId);
+            }
+            timerIntervalId = setInterval(() => {
+                timer++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        /**
+         * Stops the quiz timer.
+         */
+        function stopTimer() {
+            clearInterval(timerIntervalId);
+            timerIntervalId = null;
+        }
+
+        /**
+         * Updates the timer display in MM:SS format.
+         */
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timer / 60);
+            const seconds = timer % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // ============================ Display functions ============================
+        /**
+         * Displays the current question and its choices.
+         */
+        function displayQuestion() {
+            // Update question count display
+            questionCount.textContent = `문제 ${currentQuestionIndex + 1} / ${quizTotalQuestions}`;
+            scoreDisplay.textContent = `별 점수: ${score} ✨`; // Displays raw score during quiz
+
+            const question = currentQuizData[currentQuestionIndex];
+            questionText.textContent = question.question;
+            
+            // Clear previous choices and reset styles
+            questionChoicesArea.innerHTML = `
+                <div class="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out text-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" data-choice="O">O (동그라미)</div>
+                <div class="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out text-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" data-choice="X">X (엑스)</div>
+            `;
+
+            // Attach event listeners to the new O/X choice elements
+            Array.from(questionChoicesArea.children).forEach(choiceDiv => {
+                choiceDiv.addEventListener('click', () => {
+                    if (!isAnswerChecked) { // Ensure only one selection/check per question
+                        playButtonClickSound(); // Play sound immediately on selection
+                        selectChoice(choiceDiv.dataset.choice); // Visually select
+                        checkAnswer(); // Call checkAnswer logic
+                        // Disable choices after an answer is submitted
+                        Array.from(questionChoicesArea.children).forEach(c => {
+                            c.style.pointerEvents = 'none';
+                            c.classList.add('cursor-not-allowed'); // Add a visual cue for disabled
+                        });
+                    }
+                });
+            });
+
+            // Reset feedback and button text
+            feedbackExplanationArea.classList.add('hidden');
+            feedbackText.textContent = '';
+            explanationText.textContent = '';
+            checkNextButton.textContent = '다음 문제로 Go! 👉'; // Button text is always "다음 문제" after a choice is made
+            selectedChoice = null; // Clear selected choice
+            isAnswerChecked = false; // Reset answer checked flag for the *new* question
+            resetChoiceStyles(); // Reset choice styles and re-enable pointer events for new question
+        }
+
+        /**
+         * Handles choice selection.
+         * @param {string} choice - The selected choice ('O' or 'X')
+         */
+        function selectChoice(choice) {
+            resetChoiceStyles(); // Clear previous selection styles
+            selectedChoice = choice;
+            const selectedChoiceElement = questionChoicesArea.querySelector(`[data-choice="${choice}"]`);
+            selectedChoiceElement.classList.add(
+                'bg-blue-200', 'border-blue-500' // Light mode selection styles
+            );
+            // Apply dark mode specific selection styles
+            if (document.documentElement.classList.contains('dark')) {
+                selectedChoiceElement.classList.add('dark:selected-choice-style'); // Apply custom class for dark mode
+            }
+        }
+
+        /**
+         * Resets the styles of all choices.
+         */
+        function resetChoiceStyles() {
+            Array.from(questionChoicesArea.children).forEach(child => {
+                child.classList.remove(
+                    'bg-blue-200', 'border-blue-500', // selected (light mode)
+                    'bg-green-100', 'border-green-400', // correct (light mode)
+                    'bg-red-220', 'border-red-500',     // incorrect (light mode)
+                    'dark:selected-choice-style', // Remove custom dark mode selected class
+                    'dark:bg-green-700', 'dark:border-green-400', // correct (dark mode)
+                    'dark:bg-red-600', 'dark:border-red-300' // incorrect (dark mode)
+                );
+                child.style.pointerEvents = 'auto'; // Re-enable pointer events for choices
+                child.classList.remove('cursor-not-allowed'); // Remove disabled cursor
+            });
+        }
+
+        /**
+         * Checks the selected answer (called immediately when a choice is made).
+         */
+        function checkAnswer() {
+            isAnswerChecked = true; // Set flag to indicate answer has been checked
+            checkNextButton.textContent = '다음 문제로 Go! 👉'; // Change button text to "다음 문제"
+            feedbackExplanationArea.classList.remove('hidden'); // Show feedback area
+
+            const currentQuestion = currentQuizData[currentQuestionIndex];
+            const correctAnswer = currentQuestion.answer;
+            const selectedChoiceElement = questionChoicesArea.querySelector(`[data-choice="${selectedChoice}"]`);
+            const correctChoiceElement = questionChoicesArea.querySelector(`[data-choice="${correctAnswer}"]`);
+
+            // Highlight correct answer
+            correctChoiceElement.classList.add('bg-green-100', 'border-green-400', 'dark:bg-green-700', 'dark:border-green-400');
+
+            if (selectedChoice === correctAnswer) {
+                score++; // Increment raw score
+                feedbackText.textContent = '딩동댕! 잘했어! 🎉';
+                // Remove previous error state colors and add success state colors including dark mode variants
+                feedbackText.classList.remove('text-red-600', 'dark:text-red-400');
+                feedbackText.classList.add('text-green-600', 'dark:text-green-400');
+                playCorrectSound(); // Play correct sound
+            } else {
+                feedbackText.textContent = '아쉬워! ㅠㅠ 다시 생각해볼까? 🧐';
+                // Remove previous success state colors and add error state colors including dark mode variants
+                feedbackText.classList.remove('text-green-600', 'dark:text-green-400');
+                feedbackText.classList.add('text-red-600', 'dark:text-red-400');
+                // Ensure selected incorrect answer removes selection highlight properly and applies incorrect style
+                selectedChoiceElement.classList.remove('bg-blue-200', 'border-blue-500', 'dark:selected-choice-style'); // Remove selected style
+                selectedChoiceElement.classList.add('bg-red-200', 'border-red-500', 'dark:bg-red-600', 'dark:border-red-300'); // Add incorrect style
+                incorrectQuestions.push(currentQuestion); // Add to incorrect questions
+                playIncorrectSound(); // Play incorrect sound
+            }
+            explanationText.textContent = `꼼꼼 해설: ${currentQuestion.explanation}`;
+            scoreDisplay.textContent = `별 점수: ${score} ✨`; // Update score immediately (raw score)
+        }
+
+        /**
+         * Moves to the next question or ends the quiz (now always called by checkNextButton).
+         */
+        function checkOrNextQuestion() {
+            moveToNextQuestion();
+            playButtonClickSound(); // Play sound on button click
+        }
+
+        /**
+         * Moves to the next question or ends the quiz.
+         */
+        function moveToNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizTotalQuestions) {
+                displayQuestion();
+            } else {
+                endQuiz();
+            }
+        }
+
+        /**
+         * Ends the quiz and displays the final score.
+         */
+        function endQuiz() {
+            stopTimer(); // Stop the timer
+            showScreen('end');
+
+            // Calculate final score based on 100-point scale
+            const finalCalculatedScore = (score / quizTotalQuestions) * 100;
+            const correctCount = score;
+            const incorrectCount = incorrectQuestions.length;
+
+            // Display all information in the finalScoreDisplay element
+            finalScoreDisplay.textContent = `(총 ${quizTotalQuestions}문제, ${correctCount}개 정답, ${incorrectCount}개 오답! 대단해! 🎉 점수: ${finalCalculatedScore.toFixed(0)}점)`;
+            
+            playEndSound(); // Play end sound
+            updateQuizHeaderVisibility(false); // Hide quiz header
+            endQuizButtonsArea.classList.remove('hidden'); // Ensure buttons are visible on end screen
+        }
+
+        /**
+         * Controls which screen is visible.
+         * @param {'start'|'quiz'|'end'} screenName - The name of the screen to show
+         */
+        function showScreen(screenName) {
+            startScreen.classList.add('hidden');
+            quizScreen.classList.add('hidden');
+            endQuizScreen.classList.add('hidden');
+
+            // Always hide settings initially, then show only if it's the start screen
+            settingsControls.classList.add('hidden'); // Hide settings for all screens by default
+
+            if (screenName === 'start') {
+                startScreen.classList.remove('hidden');
+                settingsControls.classList.remove('hidden'); // Show settings only on start screen
+            } else if (screenName === 'quiz') {
+                quizScreen.classList.remove('hidden');
+                // settingsControls remains hidden
+            } else if (screenName === 'end') {
+                endQuizScreen.classList.remove('hidden');
+                // settingsControls remains hidden
+            }
+        }
+
+        /**
+         * Toggles the visibility of the quiz header elements.
+         * @param {boolean} show - True to show, false to hide
+         */
+        function updateQuizHeaderVisibility(show) {
+            if (show) {
+                quizHeader.classList.remove('hidden');
+            } else {
+                quizHeader.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Shuffles an array randomly (Fisher-Yates shuffle algorithm).
+         * @param {Array} array - The array to shuffle
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+            }
+        }
+
+        // ============================ Event Listeners ============================
+
+        // Start screen button event listeners
+        start10Button.addEventListener('click', () => startQuiz(10));
+        start20Button.addEventListener('click', () => startQuiz(20));
+        start40Button.addEventListener('click', () => startQuiz(40));
+        start150Button.addEventListener('click', () => startQuiz(150)); // New event listener for 150 questions
+
+        // This button now always moves to the next question or ends the quiz
+        checkNextButton.addEventListener('click', checkOrNextQuestion);
+        endEarlyButton.addEventListener('click', endQuiz);
+        // 'Restart Full Quiz' button restarts with the current quiz session's question count
+        restartFullQuizButton.addEventListener('click', () => restartQuiz(quizTotalQuestions));
+        reviewIncorrectButton.addEventListener('click', startReviewMode);
+        goToHomeButton.addEventListener('click', () => {
+            location.reload(); // Go to home screen = reload page
+        });
+
+        // Dark mode toggle event listener
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            // Toggle icons based on dark mode status
+            if (document.documentElement.classList.contains('dark')) {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        });
+
+        // Sound toggle event listener
+        soundToggle.addEventListener('click', () => {
+            isSoundEnabled = !isSoundEnabled; // Toggle sound status
+            // Update Tone.Destination.mute immediately
+            Tone.Destination.mute = !isSoundEnabled;
+            // Toggle icons based on sound status
+            if (isSoundEnabled) {
+                speakerIcon.classList.remove('hidden');
+                muteIcon.classList.add('hidden');
+            } else {
+                speakerIcon.classList.add('hidden');
+                muteIcon.classList.remove('hidden');
+            }
+        });
+
+
+        // ============================ Quiz initialization and start on DOMContentLoaded ============================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initially show only the start screen, hide all quiz related elements
+            startScreen.classList.remove('hidden');
+            quizScreen.classList.add('hidden'); // Explicitly hide quizScreen
+            endQuizScreen.classList.add('hidden'); // Explicitly hide endQuizScreen
+
+            quizHeader.classList.add('hidden');
+            questionChoicesArea.classList.add('hidden');
+            feedbackExplanationArea.classList.add('hidden');
+            quizControls.classList.add('hidden');
+            endQuizButtonsArea.classList.add('hidden'); // This line was important!
+            scoreDisplay.classList.add('hidden');
+
+            // Settings control should only be visible on the start screen when the page loads
+            showScreen('start'); // This handles visibility of settingsControls correctly
+
+            // Set initial dark mode icon based on system preference or saved state
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+
+            // Set initial sound icon (default: on)
+            if (isSoundEnabled) {
+                speakerIcon.classList.remove('hidden');
+                muteIcon.classList.add('hidden');
+            } else {
+                speakerIcon.classList.add('hidden');
+                muteIcon.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
